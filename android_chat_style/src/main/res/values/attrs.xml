@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="ChatBubbleView">
+        <attr name="chatText" format="string" />
+        <attr name="isSender" format="boolean" />
+
+        <attr name="senderBubbleColor" format="color" />
+        <attr name="receiverBubbleColor" format="color" />
+        <attr name="chatTextColor" format="color" />
+
+        <attr name="senderBackgroundDrawable" format="reference" />
+        <attr name="receiverBackgroundDrawable" format="reference" />
+        <attr name="bubbleCornerRadius" format="dimension" />
+        <attr name="bubblePadding" format="dimension" />
+        <attr name="chatTextSize" format="dimension" />
+
+        <attr name="showTime" format="boolean" />
+        <attr name="chatTime" format="string" />
+
+        <attr name="bubbleStrokeColor" format="color" />
+        <attr name="bubbleStrokeWidth" format="dimension" />
+
+        <attr name="maxBubbleWidth" format="dimension" />
+        <attr name="chatFontStyle">
+            <enum name="normal" value="0"/>
+            <enum name="bold" value="1"/>
+            <enum name="italic" value="2"/>
+        </attr>
+    </declare-styleable>
+
+</resources>
