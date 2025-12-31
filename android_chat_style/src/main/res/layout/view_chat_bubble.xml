@@ -1,21 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/container"
+    android:id="@+id/bubbleRoot"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:maxWidth="280dp"
+    android:orientation="vertical"
+    android:padding="10dp">
 
     <TextView
         android:id="@+id/tvMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="16sp" />
+        android:text="Hello message"
+        android:textSize="15sp"
+        android:textColor="#FFFFFF"/>
 
     <TextView
         android:id="@+id/tvTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="14:08"
         android:textSize="10sp"
-        android:visibility="gone"
-        android:alpha="0.7"/>
+        android:textColor="#80FFFFFF"
+        android:layout_gravity="end"
+        android:layout_marginTop="4dp"/>
 </LinearLayout>
