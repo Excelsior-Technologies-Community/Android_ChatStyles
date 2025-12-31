@@ -26,9 +26,10 @@ This library provides customizable chat bubble views for Android applications, m
 # **Preview**
 ---
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/80735f74-620e-4a83-bfb4-ed7a0995a474"
+  <img src="https://github.com/user-attachments/assets/33ac7cd3-2951-4c3b-b40b-84f087b013f2"
        alt="Demo GIF"
        width="200">
+
 
 
 </p>
@@ -60,10 +61,18 @@ dependencies {
     <declare-styleable name="ChatBubbleView">
         <attr name="chatText" format="string" />
         <attr name="isSender" format="boolean" />
+        <attr name="showAvatar" format="boolean" />
+        <attr name="avatarBackgroundColor" format="color"/>  <!-- NEW: Avatar background color -->
 
+        <attr name="avatarSrc" format="reference"/>       <!-- New: custom avatar -->
+        <attr name="audioShow" format="boolean"/>         <!-- New: show audio -->
+        <attr name="imgSrc" format="reference"/>  <!-- NEW: Image source for image messages -->
+
+        <attr name="imgShow" format="boolean"/>
         <attr name="senderBubbleColor" format="color" />
         <attr name="receiverBubbleColor" format="color" />
         <attr name="chatTextColor" format="color" />
+        <attr name="timeTextColor" format="color"/>
 
         <attr name="senderBackgroundDrawable" format="reference" />
         <attr name="receiverBackgroundDrawable" format="reference" />
@@ -96,18 +105,85 @@ dependencies {
 1. Add in XML
 
 ```
-<com.ext.android_chat_style.ChatBubbleView
-    android:id="@+id/chatSender"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="end"
-    android:layout_marginBottom="8dp"
-    app:chatText="How is Sara?"
-    app:isSender="true"
-    app:showTime="true"
-    app:chatTime="19:02"
-    app:senderBubbleColor="#5E6EFF"
-    app:chatTextColor="#FFFFFF"/>
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:fillViewport="true"
+    tools:context="com.ext.android_chatstyles.MainActivity"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:id="@+id/chatContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Receiver Bubble (Left) -->
+        <com.ext.android_chat_style.ChatBubbleView
+            android:id="@+id/bubble2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            app:isSender="false"
+            app:showAvatar="true"
+            app:avatarSrc="@drawable/ic_avatar_placeholder"
+            app:chatText="Hi there!"
+            app:chatTime="10:31 AM"
+            app:showTime="true"
+            app:receiverBubbleColor="#E5E5EA"
+            app:chatTextColor="#000000"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Sender Bubble (Right) -->
+        <com.ext.android_chat_style.ChatBubbleView
+            android:id="@+id/bubble1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            app:isSender="true"
+            app:showTime="true"
+
+            app:showAvatar="true"
+            app:chatText="Hello!"
+            app:chatTime="10:30 AM"
+            app:senderBubbleColor="#5E6EFF"
+            app:chatTextColor="#FFFFFF"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Sender Image Bubble (Right) -->
+        <com.ext.android_chat_style.ChatBubbleView
+            android:id="@+id/bubble3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            app:isSender="true"
+            app:showTime="true"
+          app:imgShow="true"
+            app:chatTime="10:32 AM"
+            app:imgSrc="@drawable/ic_avatar_placeholder"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Receiver Audio Bubble (Left) -->
+        <com.ext.android_chat_style.ChatBubbleView
+            android:id="@+id/bubble4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            app:avatarSrc="@drawable/ic_avatar_placeholder"
+            app:isSender="false"
+            app:audioShow="true"
+            app:showTime="true"
+            app:chatTime="10:33 AM"
+            android:layout_marginBottom="12dp"/>
+
+    </LinearLayout>
+</ScrollView>
+
 
 
 ```
