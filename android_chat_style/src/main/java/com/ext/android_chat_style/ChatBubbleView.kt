@@ -5,158 +5,288 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
+import android.view.View.MeasureSpec
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
+import androidx.cardview.widget.CardView
+import kotlin.math.min
 
 class ChatBubbleView @JvmOverloads constructor(
     context: Context,
-    attrs: AttributeSet? = null
-) : FrameLayout(context, attrs) {
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : FrameLayout(context, attrs, defStyleAttr) {
 
+    // ================= VIEWS =================
+    private val rootContainer: LinearLayout
+    private val avatarImage: ImageView
+    private val bubbleContainer: LinearLayout
     private val messageText: TextView
+    private val imageMessage: ImageView
+    private val audioContainer: CardView
+    private val audioDuration: TextView
     private val timeText: TextView
 
+    // ================= STATE =================
     private var isSender = false
-    private var textSizeSp = 16f
+    private var showAvatar = true
+    private var avatarSrc: Drawable? = null
+    private var avatarBgColor = Color.TRANSPARENT
 
-    // Default padding in pixels (~12dp horizontal, ~8dp vertical)
-    private var bubblePadding = 32 // will be used if not set via attrs
-
-    private var senderColor = Color.parseColor("#5E6EFF") // Your purple/blue
-    private var receiverColor = Color.parseColor("#E5E5EA") // Light gray
-
+    private var senderColor = Color.parseColor("#5E6EFF")
+    private var receiverColor = Color.parseColor("#E5E5EA")
     private var textColor = Color.WHITE
 
-    private var senderDrawable: Drawable? = null
-    private var receiverDrawable: Drawable? = null
+    private var bubblePadding = 32
+    private var textSizeSp = 16f
+    private var maxBubbleWidth = 0
 
+    // ---- TIME ----
     private var showTime = false
     private var timeTextValue = ""
+    private var isTimeFromXml = false
+    private var timeTextColor: Int? = null
+
+    // ---- MESSAGE ----
+    private var imgSrc: Drawable? = null
+    private var imgShow = true
+    private var audioShow = false  // default is false now
+    private var messageType = MessageType.TEXT
+
+    enum class MessageType { TEXT, IMAGE, AUDIO }
 
     init {
-        LayoutInflater.from(context)
-            .inflate(R.layout.view_chat_bubble, this, true)
+        LayoutInflater.from(context).inflate(R.layout.view_chat_bubble, this, true)
 
+        rootContainer = findViewById(R.id.rootContainer)
+        avatarImage = findViewById(R.id.avatarImage)
+        bubbleContainer = findViewById(R.id.bubbleContainer)
         messageText = findViewById(R.id.tvMessage)
+        imageMessage = findViewById(R.id.imageMessage)
+        audioContainer = findViewById(R.id.audioContainer)
+        audioDuration = findViewById(R.id.audioDuration)
         timeText = findViewById(R.id.tvTime)
 
-        attrs?.let {
-            val ta = context.obtainStyledAttributes(it, R.styleable.ChatBubbleView)
+        attrs?.let { parseAttributes(it) }
+        applyStyle()
+    }
 
+    // ================= ATTRIBUTES =================
+    private fun parseAttributes(attrs: AttributeSet) {
+        val ta = context.obtainStyledAttributes(attrs, R.styleable.ChatBubbleView)
+        try {
             messageText.text = ta.getString(R.styleable.ChatBubbleView_chatText) ?: ""
-
             isSender = ta.getBoolean(R.styleable.ChatBubbleView_isSender, false)
+            showAvatar = ta.getBoolean(R.styleable.ChatBubbleView_showAvatar, true)
+
+            avatarSrc = ta.getDrawable(R.styleable.ChatBubbleView_avatarSrc)
+            avatarBgColor = ta.getColor(
+                R.styleable.ChatBubbleView_avatarBackgroundColor,
+                Color.TRANSPARENT
+            )
 
             senderColor = ta.getColor(
                 R.styleable.ChatBubbleView_senderBubbleColor,
-                Color.parseColor("#5E6EFF")
+                senderColor
             )
 
             receiverColor = ta.getColor(
                 R.styleable.ChatBubbleView_receiverBubbleColor,
-                Color.parseColor("#E5E5EA")
+                receiverColor
             )
 
-            textColor = ta.getColor(R.styleable.ChatBubbleView_chatTextColor, Color.WHITE)
+            textColor = ta.getColor(
+                R.styleable.ChatBubbleView_chatTextColor,
+                textColor
+            )
 
-            textSizeSp = ta.getDimension(R.styleable.ChatBubbleView_chatTextSize, 16f)
+            textSizeSp = ta.getDimension(
+                R.styleable.ChatBubbleView_chatTextSize,
+                TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_SP,
+                    16f,
+                    resources.displayMetrics
+                )
+            ) / resources.displayMetrics.scaledDensity
 
-            // Safe fallback: 32px ≈ 12dp on most devices
             bubblePadding = ta.getDimensionPixelSize(
                 R.styleable.ChatBubbleView_bubblePadding,
-                (12 * resources.displayMetrics.density).toInt() // ~12dp fallback
+                bubblePadding
             )
 
-            senderDrawable = ta.getDrawable(R.styleable.ChatBubbleView_senderBackgroundDrawable)
-            receiverDrawable = ta.getDrawable(R.styleable.ChatBubbleView_receiverBackgroundDrawable)
+            maxBubbleWidth = ta.getDimensionPixelSize(
+                R.styleable.ChatBubbleView_maxBubbleWidth,
+                0
+            )
 
+            // ---- TIME ----
             showTime = ta.getBoolean(R.styleable.ChatBubbleView_showTime, false)
-            timeTextValue = ta.getString(R.styleable.ChatBubbleView_chatTime) ?: ""
+            ta.getString(R.styleable.ChatBubbleView_chatTime)?.let {
+                timeTextValue = it
+                isTimeFromXml = true
+            }
 
+            if (ta.hasValue(R.styleable.ChatBubbleView_timeTextColor)) {
+                timeTextColor = ta.getColor(
+                    R.styleable.ChatBubbleView_timeTextColor,
+                    Color.GRAY
+                )
+            }
+
+            // ---- CONTENT ----
+            imgSrc = ta.getDrawable(R.styleable.ChatBubbleView_imgSrc)
+            imgShow = ta.getBoolean(R.styleable.ChatBubbleView_imgShow, true)
+            audioShow = ta.getBoolean(R.styleable.ChatBubbleView_audioShow, false) // default false
+
+            // 🔥 AUTO MESSAGE TYPE
+            messageType = when {
+                imgSrc != null -> MessageType.IMAGE
+                audioShow -> MessageType.AUDIO
+                else -> MessageType.TEXT
+            }
+
+        } finally {
             ta.recycle()
         }
-
-        applyStyle()
     }
 
+    // ================= UI =================
     private fun applyStyle() {
-        // Message text
-        messageText.textSize = textSizeSp
-        messageText.setTextColor(if (isSender) textColor else Color.BLACK)
 
-        // Time text
-        timeText.text = timeTextValue
-        timeText.visibility = if (showTime) VISIBLE else GONE
-        timeText.setTextColor(if (isSender) Color.parseColor("#CCFFFFFF") else Color.parseColor("#999999"))
+        rootContainer.gravity = if (isSender) Gravity.END else Gravity.START
 
-        // Align bubble left/right
-        (layoutParams as? LayoutParams)?.gravity = if (isSender) Gravity.END else Gravity.START
-
-        // Set bubble background
-        background = when {
-            isSender && senderDrawable != null -> senderDrawable
-            !isSender && receiverDrawable != null -> receiverDrawable
-            else -> createBubbleDrawable()
+        // Avatar
+        avatarImage.visibility = if (showAvatar && !isSender) View.VISIBLE else View.GONE
+        if (!isSender) {
+            avatarImage.setImageDrawable(avatarSrc)
+            avatarImage.background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(avatarBgColor)
+            }
         }
 
-        // Padding: more on sides, less on top/bottom
-        setPadding(
+        // Text
+        messageText.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp)
+        messageText.setTextColor(if (isSender) textColor else Color.BLACK)
+
+        // Bubble
+        bubbleContainer.background =
+            if (isSender) bubbleDrawable(senderColor, true)
+            else bubbleDrawable(receiverColor, false)
+
+        bubbleContainer.setPadding(
             bubblePadding,
             bubblePadding / 2,
             bubblePadding,
             bubblePadding / 2
         )
-    }
 
-    private fun createBubbleDrawable(): GradientDrawable {
-        val largeRadius = 48f  // ~18dp
-        val smallRadius = 12f  // ~4dp for tail effect
+        // Time
+        timeText.text = timeTextValue
+        timeText.visibility = if (showTime) View.VISIBLE else View.GONE
+        timeText.setTextColor(
+            timeTextColor
+                ?: if (isSender) Color.parseColor("#CCFFFFFF")
+                else Color.parseColor("#999999")
+        )
 
-        return GradientDrawable().apply {
-            cornerRadii = if (isSender) {
-                // Sender: small corner at bottom-right
-                floatArrayOf(
-                    largeRadius, largeRadius, // top-left
-                    largeRadius, largeRadius, // top-right
-                    largeRadius, largeRadius, // bottom-left
-                    smallRadius, smallRadius  // bottom-right ← tail
-                )
-            } else {
-                // Receiver: small corner at bottom-left
-                floatArrayOf(
-                    largeRadius, largeRadius, // top-left
-                    largeRadius, largeRadius, // top-right
-                    smallRadius, smallRadius, // bottom-right ← tail
-                    largeRadius, largeRadius  // bottom-left
-                )
+        // Content
+        when (messageType) {
+            MessageType.TEXT -> {
+                messageText.visibility = View.VISIBLE
+                imageMessage.visibility = View.GONE
+                audioContainer.visibility = View.GONE
             }
-
-            setColor(if (isSender) senderColor else receiverColor)
+            MessageType.IMAGE -> {
+                messageText.visibility = View.GONE
+                imageMessage.visibility = if (imgShow) View.VISIBLE else View.GONE
+                imageMessage.setImageDrawable(imgSrc)
+                audioContainer.visibility = View.GONE
+            }
+            MessageType.AUDIO -> {
+                messageText.visibility = View.GONE
+                imageMessage.visibility = View.GONE
+                audioContainer.visibility = if (audioShow) View.VISIBLE else View.GONE
+            }
         }
     }
 
-    /* Public methods */
-    fun setMessage(text: String) {
-        messageText.text = text
+    private fun bubbleDrawable(color: Int, isSender: Boolean): GradientDrawable {
+        val big = 48f
+        val small = 12f
+        return GradientDrawable().apply {
+            cornerRadii = if (isSender) {
+                floatArrayOf(big, big, big, big, big, big, small, small)
+            } else {
+                floatArrayOf(big, big, big, big, small, small, big, big)
+            }
+            setColor(color)
+        }
     }
 
-    fun setSender(isSender: Boolean) {
-        this.isSender = isSender
+    // ================= PUBLIC API =================
+
+    fun setMessage(text: String) {
+        messageType = MessageType.TEXT
+        messageText.text = text
         applyStyle()
     }
 
+    fun setImageMessage(resId: Int) {
+        messageType = MessageType.IMAGE
+        imgSrc = context.getDrawable(resId)
+        applyStyle()
+    }
+
+    fun setImageMessage(drawable: Drawable?) {
+        messageType = MessageType.IMAGE
+        imgSrc = drawable
+        applyStyle()
+    }
+
+    fun setAudioMessage(duration: String) {
+        messageType = MessageType.AUDIO
+        audioDuration.text = duration
+        audioContainer.visibility = View.VISIBLE
+        audioShow = true
+        applyStyle()
+    }
+
+    fun setSender(sender: Boolean) {
+        isSender = sender
+        applyStyle()
+    }
+
+    // XML TIME HAS PRIORITY
     fun setTime(time: String, show: Boolean = true) {
+        if (isTimeFromXml) return
         timeTextValue = time
         showTime = show
         applyStyle()
     }
 
-    fun setBubbleColors(sender: Int, receiver: Int) {
-        senderColor = sender
-        receiverColor = receiver
+    fun forceSetTime(time: String, show: Boolean = true) {
+        isTimeFromXml = false
+        timeTextValue = time
+        showTime = show
         applyStyle()
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        var adjustedWidth = widthMeasureSpec
+        if (maxBubbleWidth > 0) {
+            val parent = MeasureSpec.getSize(widthMeasureSpec)
+            adjustedWidth = MeasureSpec.makeMeasureSpec(
+                min(parent, maxBubbleWidth),
+                MeasureSpec.AT_MOST
+            )
+        }
+        super.onMeasure(adjustedWidth, heightMeasureSpec)
     }
 }

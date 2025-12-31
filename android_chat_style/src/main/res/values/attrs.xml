@@ -2,31 +2,80 @@
 <resources>
 
     <declare-styleable name="ChatBubbleView">
+
+        <!-- The text message to display in the bubble -->
         <attr name="chatText" format="string" />
+
+        <!-- Set true if this bubble is from the sender, false if from receiver -->
         <attr name="isSender" format="boolean" />
 
+        <!-- Show or hide the avatar image beside the bubble -->
+        <attr name="showAvatar" format="boolean" />
+
+        <!-- Background color for the avatar circle -->
+        <attr name="avatarBackgroundColor" format="color"/>
+
+        <!-- Drawable resource for avatar image -->
+        <attr name="avatarSrc" format="reference"/>
+
+        <!-- Show or hide audio bubble; default hidden unless setAudioMessage() is called -->
+        <attr name="audioShow" format="boolean"/>
+
+        <!-- Drawable resource for an image bubble -->
+        <attr name="imgSrc" format="reference"/>
+
+        <!-- Show or hide the image bubble -->
+        <attr name="imgShow" format="boolean"/>
+
+        <!-- Bubble background color for sender -->
         <attr name="senderBubbleColor" format="color" />
+
+        <!-- Bubble background color for receiver -->
         <attr name="receiverBubbleColor" format="color" />
+
+        <!-- Color of the chat text -->
         <attr name="chatTextColor" format="color" />
 
+        <!-- Color of the time text -->
+        <attr name="timeTextColor" format="color"/>
+
+        <!-- Custom drawable for sender bubble background -->
         <attr name="senderBackgroundDrawable" format="reference" />
+
+        <!-- Custom drawable for receiver bubble background -->
         <attr name="receiverBackgroundDrawable" format="reference" />
+
+        <!-- Corner radius of the bubble -->
         <attr name="bubbleCornerRadius" format="dimension" />
+
+        <!-- Padding inside the bubble -->
         <attr name="bubblePadding" format="dimension" />
+
+        <!-- Size of the chat text in sp -->
         <attr name="chatTextSize" format="dimension" />
 
+        <!-- Show or hide the time below the message -->
         <attr name="showTime" format="boolean" />
+
+        <!-- Time string to display below the message -->
         <attr name="chatTime" format="string" />
 
+        <!-- Stroke color for bubble border -->
         <attr name="bubbleStrokeColor" format="color" />
+
+        <!-- Stroke width for bubble border -->
         <attr name="bubbleStrokeWidth" format="dimension" />
 
+        <!-- Maximum width of the bubble -->
         <attr name="maxBubbleWidth" format="dimension" />
+
+        <!-- Font style for chat text: normal, bold, italic -->
         <attr name="chatFontStyle">
             <enum name="normal" value="0"/>
             <enum name="bold" value="1"/>
             <enum name="italic" value="2"/>
         </attr>
+
     </declare-styleable>
 
 </resources>
