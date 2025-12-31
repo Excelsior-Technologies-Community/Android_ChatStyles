@@ -188,6 +188,30 @@ dependencies {
 
 ```
 
+## ⚡ **Main Activity**
+
+```
+package com.ext.android_chatstyles
+
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import com.ext.android_chat_style.ChatBubbleView
+
+class MainActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // 🔥 IMPORTANT:
+        // By default, audio bubbles are hidden.
+        // To show the audio bubble, you MUST call setAudioMessage()
+        // Example: show audio of 15 seconds
+        bubble4.setAudioMessage("0:15")
+    }
+}
+
+```
 
 
 
